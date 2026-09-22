@@ -113,6 +113,7 @@
   .plan li { font-size: clamp(12px, .95vw, 15px); margin: .25em 0; }
   .owners { display: flex; gap: .4em; flex-wrap: wrap; margin-top: auto; }
   .plan .panel { display: flex; flex-direction: column; }
+  .plan .hours { margin: auto 0 0; padding-top: .6em; border-top: 1px solid var(--line); font-weight: 700; color: var(--accent); font-size: clamp(13px, 1.05vw, 17px); }
   .bar { display: grid; grid-template-columns: 3fr 5fr 5fr 4fr 3fr; gap: 4px; margin: 1.2vw 0 0; }
   .bar div { height: 10px; border-radius: 5px; background: var(--accent); opacity: .85; }
   .bar div:nth-child(even) { opacity: .55; }
@@ -344,35 +345,41 @@
   <!-- 5. Plan -->
   <section class="slide" data-name="plan">
     <p class="eyebrow">20-day plan</p>
-    <h2>Five milestones, one accountable developer from prototype to deployment</h2>
+    <h2>Five milestones in 20 working days, about 190 hours of work</h2>
     <div class="plan">
       <div class="panel">
         <span class="days">Days 1-3</span>
         <h3>Architecture and prototype</h3>
         <ul><li>Custom, low-code and existing-platform comparison</li><li>Architecture, data flow, security</li><li>Clickable prototype and final plan</li></ul>
+        <p class="hours">About 20 hours</p>
       </div>
       <div class="panel">
         <span class="days">Days 4-8</span>
         <h3>Presentation and admin</h3>
         <ul><li>Responsive slides and branching flow</li><li>Dromo launch token and prefill</li><li>Coverage and needs analysis</li><li>Admin for slides, questions, priorities</li></ul>
+        <p class="hours">About 47 hours</p>
       </div>
       <div class="panel">
         <span class="days">Days 9-13</span>
         <h3>Underwriting and AI</h3>
         <ul><li>Word rules into decision tables</li><li>Conditional questionnaire</li><li>Eligibility, ranking, explanations</li><li>Override workflow</li></ul>
+        <p class="hours">About 64 hours</p>
       </div>
       <div class="panel">
         <span class="days">Days 14-17</span>
         <h3>Quotes and One Fill</h3>
         <ul><li>Quote API integration</li><li>Filter and rank up to five</li><li>Embed One Fill and pass all data</li></ul>
+        <p class="hours">About 20 hours</p>
       </div>
       <div class="panel">
         <span class="days">Days 18-20</span>
         <h3>Testing and deployment</h3>
         <ul><li>Dromo write-back and activity tracking</li><li>Laptop, tablet, phone and browser tests</li><li>Offline save and sync tests</li><li>Deploy to your cloud, code and docs</li></ul>
+        <p class="hours">About 43 hours</p>
       </div>
     </div>
     <div class="bar" aria-hidden="true"><div></div><div></div><div></div><div></div><div></div></div>
+    <p class="note">Hours come from a task-by-task estimate of your brief. Work runs at a steady pace across the 20 days, and each milestone is delivered on the day in your plan.</p>
   </section>
 
   <!-- 6. Ownership -->
