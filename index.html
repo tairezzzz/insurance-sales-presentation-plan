@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sales Presentation MVP Plan</title>
+<meta name="description" content="Architecture and 20-day MVP plan for an interactive insurance sales presentation with a rules-based underwriting engine and AI explanations.">
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --ink: #151a21;
+    --muted: #5a6473;
+    --line: #d8dde4;
+    --accent: #1d4ed8;
+    --accent-soft: #e7eeff;
+    --ok: #177245;
+    --ok-soft: #e4f3ea;
+    --warn: #a15c00;
+    --warn-soft: #fff1dc;
+    --bad: #b3261e;
+    --bad-soft: #fdeceb;
+    --alex: #7c3aed;
+    --alex-soft: #f1eafe;
+    --radius: 14px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font); }
+  body { overflow: hidden; }
+  .deck { position: relative; width: 100vw; height: 100vh; }
+  .slide {
+    position: absolute; inset: 0; display: none; flex-direction: column;
+    padding: 4.5vh 5vw 7vh; overflow-y: auto;
+  }
+  .slide.active { display: flex; }
+  .eyebrow { font-size: clamp(12px, 1.05vw, 16px); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; margin: 0 0 .6em; }
+  h1 { font-size: clamp(30px, 4.2vw, 64px); line-height: 1.08; margin: 0 0 .35em; letter-spacing: -.02em; }
+  h2 { font-size: clamp(24px, 2.6vw, 42px); line-height: 1.15; margin: 0 0 .5em; letter-spacing: -.01em; }
+  h3 { font-size: clamp(16px, 1.35vw, 22px); margin: 0 0 .4em; }
+  p, li { font-size: clamp(14px, 1.2vw, 20px); line-height: 1.45; color: var(--ink); }
+  .muted { color: var(--muted); }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1em 1.3em; }
+  .grow { flex: 1; min-height: 0; }
+  .label { display: inline-block; font-size: clamp(11px, .9vw, 14px); padding: .25em .6em; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .label.ok { background: var(--ok-soft); color: var(--ok); }
+  .label.warn { background: var(--warn-soft); color: var(--warn); }
+  .label.bad { background: var(--bad-soft); color: var(--bad); }
+  .label.alex { background: var(--alex-soft); color: var(--alex); }
+  .note { font-size: clamp(11px, .85vw, 14px); color: var(--muted); margin-top: auto; padding-top: 1em; }
+
+  /* Title */
+  .title-wrap { margin: auto 0; max-width: 1100px; }
+  .title-wrap .sub { font-size: clamp(18px, 1.9vw, 30px); color: var(--muted); margin: 0 0 1.4em; }
+  .people { display: flex; gap: 1.2em; flex-wrap: wrap; }
+  .person { display: flex; align-items: center; gap: .7em; }
+  .avatar { width: 2.6em; height: 2.6em; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: #fff; background: var(--accent); font-size: clamp(14px, 1.2vw, 18px); }
+  .avatar.alex { background: var(--alex); }
+  .person b { display: block; font-size: clamp(15px, 1.3vw, 20px); }
+  .person span { color: var(--muted); font-size: clamp(13px, 1.05vw, 16px); }
+
+  /* Architecture */
+  .diagram { width: 100%; height: 100%; max-height: 74vh; }
+  .diagram text { font-family: var(--font); fill: var(--ink); }
+  .diagram .t { font-size: 21px; font-weight: 700; }
+  .diagram .s { font-size: 15px; fill: var(--muted); }
+  .diagram .edge { font-size: 14px; fill: var(--muted); }
+  .diagram .box { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; }
+  .diagram .box.key { stroke: var(--accent); stroke-width: 2; }
+  .diagram .box.ext { fill: #fbfbfc; stroke-dasharray: 6 5; }
+  .diagram .cloud { fill: #eef2f8; stroke: #9aa7ba; stroke-width: 1.5; stroke-dasharray: 8 6; }
+  .diagram .arrow { stroke: var(--accent); stroke-width: 2.2; fill: none; marker-end: url(#head); }
+  .diagram .arrow.back { stroke: var(--ok); marker-end: url(#headok); }
+  .diagram .chip { fill: var(--ok-soft); stroke: none; }
+  .diagram .chipt { font-size: 14px; fill: var(--ok); font-weight: 600; }
+
+  /* Rules */
+  .rules { display: grid; grid-template-columns: 1fr 1.25fr; gap: 1.4vw; }
+  .guide p { font-family: Georgia, "Times New Roman", serif; font-size: clamp(13px, 1.05vw, 17px); margin: 0 0 .8em; }
+  .guide .para { color: var(--muted); font-family: var(--mono); font-size: .85em; margin-right: .4em; }
+  mark { background: #fff0b8; padding: 0 .15em; border-radius: 3px; }
+  table { width: 100%; border-collapse: collapse; font-size: clamp(12px, .98vw, 16px); }
+  th, td { text-align: left; padding: .5em .55em; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: .9em; }
+  td code { font-family: var(--mono); font-size: .92em; }
+  .review { display: flex; gap: .6em; flex-wrap: wrap; align-items: center; margin-top: .9em; }
+  .review .step { font-size: clamp(12px, .95vw, 15px); padding: .35em .7em; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+  .review .arrowtxt { color: var(--muted); }
+  .ai { margin-top: 1.1vw; display: grid; grid-template-columns: 1.4fr 1fr; gap: 1.4vw; }
+  .ai h3 { display: flex; gap: .5em; align-items: center; }
+  .ai p { margin: .3em 0; font-size: clamp(13px, 1.05vw, 17px); }
+
+  /* Flow */
+  .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1vw; align-items: stretch; }
+  .flow .panel { position: relative; }
+  .flow .panel:not(:last-child)::after {
+    content: "\2192"; position: absolute; right: -0.95vw; top: 50%; transform: translate(50%, -50%);
+    color: var(--accent); font-weight: 700; font-size: clamp(16px, 1.6vw, 26px);
+  }
+  .flow h3 { font-size: clamp(14px, 1.2vw, 19px); }
+  .flow p { font-size: clamp(12px, .98vw, 16px); margin: 0; color: var(--muted); }
+  .two { display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.4vw; margin-top: 1.4vw; }
+  .quotes td:last-child, .quotes th:last-child { text-align: right; }
+  ul.tight { margin: .2em 0 0; padding-left: 1.1em; }
+  ul.tight li { font-size: clamp(13px, 1.02vw, 17px); margin: .2em 0; }
+
+  /* Plan */
+  .plan { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1vw; }
+  .plan .days { font-family: var(--mono); color: var(--accent); font-weight: 700; font-size: clamp(12px, 1vw, 16px); }
+  .plan h3 { margin-top: .3em; font-size: clamp(15px, 1.25vw, 20px); }
+  .plan ul { margin: .4em 0 .8em; padding-left: 1.05em; }
+  .plan li { font-size: clamp(12px, .95vw, 15px); margin: .25em 0; }
+  .owners { display: flex; gap: .4em; flex-wrap: wrap; margin-top: auto; }
+  .plan .panel { display: flex; flex-direction: column; }
+  .bar { display: grid; grid-template-columns: 3fr 5fr 5fr 4fr 3fr; gap: 4px; margin: 1.2vw 0 0; }
+  .bar div { height: 10px; border-radius: 5px; background: var(--accent); opacity: .85; }
+  .bar div:nth-child(even) { opacity: .55; }
+
+  /* Own */
+  .own { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2vw; margin-top: .6vw; }
+  .own .panel h3 { color: var(--ok); }
+  .own .panel p { margin: 0; color: var(--muted); font-size: clamp(13px, 1.05vw, 17px); }
+
+  .hud { position: fixed; right: 2vw; bottom: 2vh; font-size: 13px; color: var(--muted); display: flex; gap: .8em; align-items: center; user-select: none; }
+  .hud button { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: .3em .7em; cursor: pointer; font: inherit; }
+  .progress { position: fixed; left: 0; bottom: 0; height: 4px; background: var(--accent); transition: width .2s ease; }
+
+  @media (max-width: 820px) {
+    body { overflow: auto; }
+    .slide { position: relative; display: flex; padding: 28px 16px 40px; border-bottom: 1px solid var(--line); overflow: visible; }
+    .deck { height: auto; }
+    .rules, .ai, .two, .own { grid-template-columns: 1fr; }
+    .flow, .plan { grid-template-columns: 1fr; }
+    .flow .panel:not(:last-child)::after { content: "\2193"; right: 50%; top: auto; bottom: -1.1em; transform: translateX(50%); }
+    .hud, .progress { display: none; }
+  }
+</style>
+</head>
+<body>
+<main class="deck" id="deck">
+
+  <!-- 1. Title -->
+  <section class="slide" data-name="title">
+    <div class="title-wrap">
+      <p class="eyebrow">Architecture and 20-day MVP plan</p>
+      <h1>Interactive insurance sales presentation with rules-based underwriting and AI explanations</h1>
+      <p class="sub">Launch from the CRM, present on any device, check eligibility against your own rules, quote, and hand off to the application.</p>
+      <div class="people">
+        <div class="person"><div class="avatar">VB</div><div><b>Vadim Balabukha</b><span>Architecture, rules engine, integrations</span></div></div>
+        <div class="person"><div class="avatar alex">AT</div><div><b>Alex Tkachenko</b><span>Presentation, admin, offline sync</span></div></div>
+      </div>
+    </div>
+    <p class="note">Prepared for an Upwork proposal. Carrier names, rules and figures on the following pages are illustrative.</p>
+  </section>
+
+  <!-- 2. Architecture -->
+  <section class="slide" data-name="architecture">
+    <p class="eyebrow">Architecture</p>
+    <h2>One progressive web app, one API, all of it in your cloud account</h2>
+    <div class="grow">
+      <svg class="diagram" viewBox="0 0 1600 820" role="img" aria-label="Architecture diagram: Dromo launches the sales presentation PWA with a signed token; the API in your cloud connects to the CMS, rules engine, AI layer, PostgreSQL, the quote API and One Fill, and writes results back to Dromo.">
+        <defs>
+          <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1d4ed8"/></marker>
+          <marker id="headok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#177245"/></marker>
+        </defs>
+
+        <!-- Cloud boundary -->
+        <rect class="cloud" x="700" y="40" width="560" height="700" rx="18"/>
+        <text class="t" x="724" y="78" style="fill:#44506a">Your cloud account</text>
+
+        <!-- Dromo -->
+        <rect class="box ext" x="30" y="300" width="220" height="140" rx="12"/>
+        <text class="t" x="52" y="345">Dromo CRM</text>
+        <text class="s" x="52" y="375">Agent starts the</text>
+        <text class="s" x="52" y="397">presentation here</text>
+
+        <!-- PWA -->
+        <rect class="box key" x="330" y="250" width="300" height="240" rx="12"/>
+        <text class="t" x="352" y="292">Sales presentation</text>
+        <text class="s" x="352" y="320">Progressive web app</text>
+        <text class="s" x="352" y="356">Slides, needs analysis,</text>
+        <text class="s" x="352" y="378">underwriting, quotes</text>
+        <text class="s" x="352" y="412">Laptop, tablet, phone</text>
+        <text class="s" x="352" y="434">Chrome, Edge, Safari</text>
+        <text class="s" x="352" y="468" style="fill:#177245;font-weight:600">Answers kept offline, synced</text>
+
+        <!-- API -->
+        <rect class="box key" x="740" y="320" width="220" height="130" rx="12"/>
+        <text class="t" x="762" y="362">API (Node.js)</text>
+        <text class="s" x="762" y="392">Verifies the token,</text>
+        <text class="s" x="762" y="414">runs the workflow</text>
+
+        <!-- PostgreSQL -->
+        <rect class="box" x="1010" y="320" width="220" height="130" rx="12"/>
+        <text class="t" x="1032" y="362">PostgreSQL</text>
+        <text class="s" x="1032" y="392">Sessions, answers,</text>
+        <text class="s" x="1032" y="414">quotes, activity</text>
+
+        <!-- CMS -->
+        <rect class="box" x="740" y="110" width="220" height="140" rx="12"/>
+        <text class="t" x="762" y="150">Headless CMS</text>
+        <text class="s" x="762" y="176">Open source. Slides,</text>
+        <text class="s" x="762" y="198">questions, formulas,</text>
+        <text class="s" x="762" y="220">branding, disclaimers</text>
+
+        <!-- Rules -->
+        <rect class="box" x="1010" y="110" width="220" height="140" rx="12"/>
+        <text class="t" x="1032" y="150">Rules engine</text>
+        <text class="s" x="1032" y="176">Open source. Versioned</text>
+        <text class="s" x="1032" y="198">decision tables decide</text>
+        <text class="s" x="1032" y="220">carrier eligibility</text>
+
+        <!-- AI -->
+        <rect class="box" x="740" y="520" width="220" height="130" rx="12"/>
+        <text class="t" x="762" y="560">AI layer</text>
+        <text class="s" x="762" y="588">Ranks and explains</text>
+        <text class="s" x="762" y="610">eligible options, cites</text>
+        <text class="s" x="762" y="632">the rule, flags doubts</text>
+
+        <!-- Audit -->
+        <rect class="box" x="1010" y="520" width="220" height="130" rx="12"/>
+        <text class="t" x="1032" y="560">Audit log</text>
+        <text class="s" x="1032" y="588">Every access, rule</text>
+        <text class="s" x="1032" y="610">version and agent</text>
+        <text class="s" x="1032" y="632">override with reason</text>
+
+        <!-- Security chips -->
+        <rect class="chip" x="740" y="676" width="236" height="40" rx="20"/>
+        <text class="chipt" x="762" y="702">Token checked on the server</text>
+        <rect class="chip" x="990" y="676" width="246" height="40" rx="20"/>
+        <text class="chipt" x="1010" y="702">Health data encrypted at rest</text>
+
+        <!-- External: Quote API -->
+        <rect class="box ext" x="1340" y="200" width="235" height="140" rx="12"/>
+        <text class="t" x="1362" y="242">Quote API</text>
+        <text class="s" x="1362" y="270">Eligible products only,</text>
+        <text class="s" x="1362" y="292">up to five, in your</text>
+        <text class="s" x="1362" y="314">priority order</text>
+
+        <!-- External: One Fill -->
+        <rect class="box ext" x="1340" y="420" width="235" height="140" rx="12"/>
+        <text class="t" x="1362" y="462">One Fill</text>
+        <text class="s" x="1362" y="490">Embedded, prefilled</text>
+        <text class="s" x="1362" y="512">with client, underwriting</text>
+        <text class="s" x="1362" y="534">and quote data</text>
+
+        <!-- Arrows -->
+        <path class="arrow" d="M 250 370 H 326"/>
+        <text class="edge" x="256" y="356">signed token</text>
+        <path class="arrow" d="M 630 385 H 736"/>
+        <path class="arrow" d="M 850 320 V 254"/>
+        <path class="arrow" d="M 945 320 L 1040 254"/>
+        <path class="arrow" d="M 960 385 H 1006"/>
+        <path class="arrow" d="M 850 450 V 516"/>
+        <path class="arrow" d="M 945 450 L 1040 516"/>
+        <path class="arrow" d="M 905 320 V 286 H 1336"/>
+        <path class="arrow" d="M 905 450 V 482 H 1336"/>
+        <path class="arrow back" d="M 740 430 H 680 V 780 H 140 V 444"/>
+        <text class="edge" x="190" y="770" style="fill:#177245">Write-back: corrected client details, answers, underwriting results, quotes, activity</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 3. Rules -->
+  <section class="slide" data-name="rules">
+    <p class="eyebrow">Underwriting</p>
+    <h2>From the Word guide to rules the AI can cite</h2>
+    <div class="rules">
+      <div class="panel guide">
+        <h3>Carrier guide, section 4.2: heart conditions <span class="label warn">Word</span></h3>
+        <p><span class="para">&para;1</span>Applicants who have had a heart attack, stent placement or bypass surgery <mark>within the past 24 months</mark> are not eligible for any plan.</p>
+        <p><span class="para">&para;2</span>If the event was <mark>more than 24 months ago</mark> and the applicant has <mark>not been hospitalized in the past 12 months</mark>, offer the Graded benefit plan.</p>
+        <p><span class="para">&para;3</span>Current use of nitroglycerin for chest pain requires the Guaranteed issue plan, <mark>regardless of the event date</mark>.</p>
+      </div>
+      <div class="panel">
+        <h3>Decision table, version 7 <span class="label ok">Published</span></h3>
+        <table>
+          <thead><tr><th>Rule</th><th>Source</th><th>Event</th><th>Since event</th><th>Hospital, 12 mo</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td><code>HC-01</code></td><td>&sect;4.2 &para;1</td><td>Heart attack, stent, bypass</td><td>&le; 24 mo</td><td>any</td><td><span class="label bad">Decline</span></td></tr>
+            <tr><td><code>HC-02</code></td><td>&sect;4.2 &para;2</td><td>Heart attack, stent, bypass</td><td>&gt; 24 mo</td><td>no</td><td><span class="label ok">Graded</span></td></tr>
+            <tr><td><code>HC-03</code></td><td>&sect;4.2 &para;2</td><td>Heart attack, stent, bypass</td><td>&gt; 24 mo</td><td>yes</td><td><span class="label bad">Decline</span></td></tr>
+            <tr><td><code>HC-04</code></td><td>&sect;4.2 &para;3</td><td>Nitroglycerin, current</td><td>any</td><td>any</td><td><span class="label warn">Guaranteed issue</span></td></tr>
+          </tbody>
+        </table>
+        <div class="review">
+          <span class="step">A model drafts each rule from the guide</span><span class="arrowtxt">&rarr;</span>
+          <span class="step">Admin reviews the changes</span><span class="arrowtxt">&rarr;</span>
+          <span class="step">Version 7 published</span>
+        </div>
+      </div>
+    </div>
+    <div class="ai">
+      <div class="panel">
+        <h3>Recommendation shown to the agent <span class="label">AI explanation</span></h3>
+        <p><b>Carrier B, Graded benefit.</b> Heart attack 30 months ago, outside the 24-month window, and no hospital stay in the past year, so rule <code>HC-02</code> (&sect;4.2 &para;2) applies.</p>
+        <p><span class="label warn">Check</span> The medication list mentions nitroglycerin. If it is still in use, rule <code>HC-04</code> moves this client to Guaranteed issue. Confirm with the client.</p>
+      </div>
+      <div class="panel">
+        <h3>Agent override</h3>
+        <p>The agent can pick a different eligible option and must record why. The reason, the rule version and the AI suggestion are stored together in the audit log.</p>
+        <p class="muted">Eligibility always comes from the published rules. The AI only ranks and explains what the rules allow.</p>
+      </div>
+    </div>
+    <p class="note">Illustrative example: the carrier, sections and rules are made up to show the format.</p>
+  </section>
+
+  <!-- 4. Quote to application -->
+  <section class="slide" data-name="quotes">
+    <p class="eyebrow">Quote to application</p>
+    <h2>Eligible quotes in your order, then One Fill opens prefilled</h2>
+    <div class="flow">
+      <div class="panel"><h3>Eligibility</h3><p>Published rules remove every product the client cannot get.</p></div>
+      <div class="panel"><h3>Quote API</h3><p>Age, gender, state, tobacco, coverage, budget and product type go in.</p></div>
+      <div class="panel"><h3>Top five</h3><p>Eligible quotes shown in the priority order your admins set.</p></div>
+      <div class="panel"><h3>One Fill</h3><p>Client, underwriting, carrier, product, coverage and premium carried over.</p></div>
+      <div class="panel"><h3>Write-back</h3><p>Answers, results, quotes and activity go back to Dromo.</p></div>
+    </div>
+    <div class="two">
+      <div class="panel quotes">
+        <h3>What the agent sees <span class="label">Sample</span></h3>
+        <table>
+          <thead><tr><th>#</th><th>Carrier</th><th>Plan</th><th>Coverage</th><th>Monthly</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Carrier B</td><td>Graded benefit</td><td>$10,000</td><td>$52.40</td></tr>
+            <tr><td>2</td><td>Carrier D</td><td>Graded benefit</td><td>$10,000</td><td>$55.10</td></tr>
+            <tr><td>3</td><td>Carrier A</td><td>Guaranteed issue</td><td>$10,000</td><td>$71.80</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <h3>Tracked for every session</h3>
+        <ul class="tight">
+          <li>Slides viewed and skipped, and time per section</li>
+          <li>Quotes shown, selected and changed</li>
+          <li>Application launched, or exit without applying</li>
+          <li>Corrected client details sent back to Dromo</li>
+        </ul>
+      </div>
+    </div>
+    <p class="note">Illustrative figures. Real quotes come from the quote API you purchase.</p>
+  </section>
+
+  <!-- 5. Plan -->
+  <section class="slide" data-name="plan">
+    <p class="eyebrow">20-day plan</p>
+    <h2>Five milestones, two developers working in parallel</h2>
+    <div class="plan">
+      <div class="panel">
+        <span class="days">Days 1-3</span>
+        <h3>Architecture and prototype</h3>
+        <ul><li>Custom, low-code and existing-platform comparison</li><li>Architecture, data flow, security</li><li>Clickable prototype and final plan</li></ul>
+        <div class="owners"><span class="label">Vadim</span><span class="label alex">Alex</span></div>
+      </div>
+      <div class="panel">
+        <span class="days">Days 4-8</span>
+        <h3>Presentation and admin</h3>
+        <ul><li>Responsive slides and branching flow</li><li>Dromo launch token and prefill</li><li>Coverage and needs analysis</li><li>Admin for slides, questions, priorities</li></ul>
+        <div class="owners"><span class="label alex">Alex</span><span class="label">Vadim: token</span></div>
+      </div>
+      <div class="panel">
+        <span class="days">Days 9-13</span>
+        <h3>Underwriting and AI</h3>
+        <ul><li>Word rules into decision tables</li><li>Conditional questionnaire</li><li>Eligibility, ranking, explanations</li><li>Override workflow</li></ul>
+        <div class="owners"><span class="label">Vadim</span><span class="label alex">Alex: questionnaire UI</span></div>
+      </div>
+      <div class="panel">
+        <span class="days">Days 14-17</span>
+        <h3>Quotes and One Fill</h3>
+        <ul><li>Quote API integration</li><li>Filter and rank up to five</li><li>Embed One Fill and pass all data</li></ul>
+        <div class="owners"><span class="label">Vadim: quote API</span><span class="label alex">Alex: One Fill</span></div>
+      </div>
+      <div class="panel">
+        <span class="days">Days 18-20</span>
+        <h3>Testing and deployment</h3>
+        <ul><li>Dromo write-back and activity tracking</li><li>Laptop, tablet, phone and browser tests</li><li>Offline save and sync tests</li><li>Deploy to your cloud, code and docs</li></ul>
+        <div class="owners"><span class="label">Vadim</span><span class="label alex">Alex</span></div>
+      </div>
+    </div>
+    <div class="bar" aria-hidden="true"><div></div><div></div><div></div><div></div><div></div></div>
+  </section>
+
+  <!-- 6. Ownership -->
+  <section class="slide" data-name="ownership">
+    <p class="eyebrow">What you own</p>
+    <h2>Your code, your cloud, open-source parts</h2>
+    <div class="own">
+      <div class="panel"><h3>Source code</h3><p>Everything lives in your repository from day one, with documentation at handover.</p></div>
+      <div class="panel"><h3>Your cloud account</h3><p>The app, the database and the files run in your account under your access controls.</p></div>
+      <div class="panel"><h3>Open-source parts</h3><p>The CMS and the rules engine are open source, so no contractor-controlled dependency sits in the stack.</p></div>
+      <div class="panel"><h3>Rules you control</h3><p>Admins upload a new Word guide, review the drafted changes and publish a new version.</p></div>
+      <div class="panel"><h3>Security</h3><p>Launch token checked on the server, health data encrypted at rest, every access logged.</p></div>
+      <div class="panel"><h3>After launch</h3><p>An optional monthly maintenance plan covers fixes, rule updates and carrier changes.</p></div>
+    </div>
+    <p class="note">Vadim Balabukha and Alex Tkachenko</p>
+  </section>
+
+</main>
+<div class="progress" id="progress"></div>
+<div class="hud"><button type="button" id="prev" aria-label="Previous slide">&larr;</button><span id="count">1 / 6</span><button type="button" id="next" aria-label="Next slide">&rarr;</button></div>
+<script>
+  (function () {
+    var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+    var i = 0;
+    function show(n) {
+      i = Math.max(0, Math.min(slides.length - 1, n));
+      slides.forEach(function (s, k) { s.classList.toggle('active', k === i); });
+      document.getElementById('count').textContent = (i + 1) + ' / ' + slides.length;
+      document.getElementById('progress').style.width = ((i + 1) / slides.length * 100) + '%';
+      if (location.hash !== '#' + (i + 1)) { history.replaceState(null, '', '#' + (i + 1)); }
+    }
+    document.addEventListener('keydown', function (e) {
+      if (['ArrowRight', 'PageDown', ' ', 'Enter'].indexOf(e.key) >= 0) { e.preventDefault(); show(i + 1); }
+      if (['ArrowLeft', 'PageUp', 'Backspace'].indexOf(e.key) >= 0) { e.preventDefault(); show(i - 1); }
+      if (e.key === 'Home') { show(0); }
+      if (e.key === 'End') { show(slides.length - 1); }
+    });
+    document.getElementById('next').addEventListener('click', function () { show(i + 1); });
+    document.getElementById('prev').addEventListener('click', function () { show(i - 1); });
+    var start = parseInt((location.hash || '#1').slice(1), 10);
+    show(isNaN(start) ? 0 : start - 1);
+  })();
+</script>
+</body>
+</html>
